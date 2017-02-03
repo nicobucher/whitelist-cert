@@ -28,14 +28,8 @@ if [[ "$SERVERNAME" =~ ^([\da-z\.-]+\.[a-z\.]{2,6}|[\d\.]+)([\/:?=&#]{1}[\da-z\.
     echo -n | openssl s_client -connect $SERVERNAME:$PORT | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | tee $SERVERNAME.crt
     sudo mv $SERVERNAME.crt /usr/share/ca-certificates/
     sudo update-ca-certificates
-
-    if [[ $USERNAME -ne $USER ]]; then
-        sudo certutil -d sql:/home/$USERNAME/.pki/nssdb -A -t "CP,CP," -n "$SERVERNAME" -i /usr/share/ca-certificates/$SERVERNAME.crt
-        sudo certutil -d sql:/home/$USERNAME/.pki/nssdb -L
-    else	
-        certutil -d sql:$HOME/.pki/nssdb -A -t "CP,CP," -n "$SERVERNAME" -i /usr/share/ca-certificates/$SERVERNAME.crt
-        certutil -d sql:$HOME/.pki/nssdb -L
-    fi
+    sudo certutil -d sql:/home/$USERNAME/.pki/nssdb -A -t "CP,CP," -n "$SERVERNAME" -i /usr/share/ca-certificates/$SERVERNAME.crt
+    sudo certutil -d sql:/home/$USERNAME/.pki/nssdb -L
 else
     echo "Use this script to whitelist ssl ca-certificates of web pages."
     echo ""
