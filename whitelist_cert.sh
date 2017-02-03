@@ -1,21 +1,46 @@
 #!/bin/bash
 
-SERVERNAME=$(echo "$1" | sed -E -e 's/https?:\/\///' -e 's/\/.*//')
-echo "$SERVERNAME"
 
-if [[ "$SERVERNAME" =~ .*\..* ]]; then
+SERVERNAME=$(echo "$1" | sed -E -e 's/https?:\/\///' -e 's/\/.*//')
+shift
+
+PORT=443
+USERNAME=$USER
+
+while getopts ':p:u:' opt; do
+    case $opt in
+        p)  
+	    PORT="$OPTARG"
+            ;;
+        u)  
+            USERNAME="$OPTARG" 
+            ;;
+        *)  
+            exit 1   
+            ;;
+    esac
+done
+
+echo "$SERVERNAME:$PORT, $USERNAME"
+
+if [[ "$SERVERNAME" =~ ^([\da-z\.-]+\.[a-z\.]{2,6}|[\d\.]+)([\/:?=&#]{1}[\da-z\.-]+)*[\/\?]?$ ]]; then
     echo "Adding certificate for $SERVERNAME"
-    if [[ $# -eq 2 ]]; then
-        echo -n | openssl s_client -connect $SERVERNAME:$2 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | tee $SERVERNAME.crt
-    else
-	echo -n | openssl s_client -connect $SERVERNAME:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | tee $SERVERNAME.crt
-    fi
+    echo -n | openssl s_client -connect $SERVERNAME:$PORT | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | tee $SERVERNAME.crt
     sudo mv $SERVERNAME.crt /usr/share/ca-certificates/
     sudo update-ca-certificates
-    certutil -d sql:$HOME/.pki/nssdb -A -t "CP,CP," -n "$SERVERNAME" -i /usr/share/ca-certificates/$SERVERNAME.crt
+
+    if [[ $USERNAME -ne $USER ]]; then
+        sudo certutil -d sql:/home/$USERNAME/.pki/nssdb -A -t "CP,CP," -n "$SERVERNAME" -i /usr/share/ca-certificates/$SERVERNAME.crt
+        sudo certutil -d sql:/home/$USERNAME/.pki/nssdb -L
+    else	
+        certutil -d sql:$HOME/.pki/nssdb -A -t "CP,CP," -n "$SERVERNAME" -i /usr/share/ca-certificates/$SERVERNAME.crt
+        certutil -d sql:$HOME/.pki/nssdb -L
+    fi
 else
     echo "Use this script to whitelist ssl ca-certificates of web pages."
     echo ""
-    echo "Usage: $0 www.site.name [port]"
+    echo "Usage: $0 www.site.name -p [port] -u [username]"
+    echo "Use [port] to specify ports other than 443"
+    echo "Use [username] to specify if you want to whitelist the certificate for other users"
     echo "http:// and such will be stripped automatically"
 fi
