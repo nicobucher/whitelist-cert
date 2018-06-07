@@ -5,4 +5,4 @@ Tested with chrome 55.0 and Ubuntu 16.04
 
 required packages:
 
-sudo apt-get install libnss3-tools
+apt install libnss3-tools
