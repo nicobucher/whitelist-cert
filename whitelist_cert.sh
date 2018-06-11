@@ -37,4 +37,7 @@ else
     echo "Use [port] to specify ports other than 443"
     echo "Use [username] to specify if you want to whitelist the certificate for other users"
     echo "http:// and such will be stripped automatically"
+    echo ""
+    echo "Use: certutil -d sql:/home/$USERNAME/.pki/nssdb -D -n $certnickname to remove certificates
+    echo "Use: certutil -d sql:/home/$USERNAME/.pki/nssdb -L to list all certificates in the database"
 fi
